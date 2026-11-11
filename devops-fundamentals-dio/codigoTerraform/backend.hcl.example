@@ -1,0 +1,7 @@
+# Modelo: copie para backend.hcl e preencha antes da inicialização remota.
+# O RG foi informado pelo usuário, mas sua existência ainda não foi confirmada.
+resource_group_name  = "rg-terraform-001"
+storage_account_name = "<NOME_REAL_DO_STORAGE_DE_BACKEND>"
+container_name       = "tfstate" # Confirmar existência.
+key                  = "<CHAVE_DO_STATE_CONFIRMADA_PARA_ESTE_AMBIENTE>"
+# Não colocar tokens, senhas, SAS ou Access Keys neste arquivo.

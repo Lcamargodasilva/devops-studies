@@ -1,0 +1,7 @@
+{
+  "applyEnabled": false,
+  "authorizedBranch": "refs/heads/main",
+  "environment": "dev-terraform",
+  "maxPlanAgeMinutes": 60,
+  "allowedApplyAddresses": ["azurerm_resource_group.rg"]
+}

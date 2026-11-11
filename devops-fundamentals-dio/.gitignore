@@ -1,0 +1,24 @@
+# Dados locais e arquivos sensíveis do Terraform.
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.plan
+tfplan*
+plan.json
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+*.tfbackend
+backend.hcl
+.local-state-backup/
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+*.key
+
+# O lockfile deve ser versionado.
+!.terraform.lock.hcl

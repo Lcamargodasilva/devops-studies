@@ -1,0 +1,195 @@
+# Azure Repos: validação de PR é configurada pela política Build Validation.
+# Apply bloqueado por scripts/cd/policy.json e aprovação externa; sem destroy.
+trigger:
+  batch: true
+  branches:
+    include:
+      - main
+      - feature/terraform-ci
+  paths:
+    include:
+      - azure-pipelines.yml
+      - codigoTerraform/*
+      - scripts/ci/*
+      - scripts/cd/*
+      - pipelines/*
+      - tests/*
+      - .gitignore
+
+parameters:
+  - name: agentType
+    displayName: Tipo de agente (confirmar disponibilidade)
+    type: string
+    default: microsoftHosted
+    values:
+      - selfHosted
+      - microsoftHosted
+  - name: agentPool
+    displayName: Nome real do pool próprio
+    type: string
+    default: PREENCHER_POOL
+  - name: runAzurePlan
+    displayName: Executar plano no Azure (somente manual na main, após conferir state)
+    type: boolean
+    default: false
+  - name: serviceConnection
+    displayName: Nome da Service Connection ARM com Workload Identity Federation
+    type: string
+    default: PREENCHER_SERVICE_CONNECTION
+  - name: serviceConnectionId
+    displayName: ID real da mesma Service Connection (GUID)
+    type: string
+    default: PREENCHER_ID
+  - name: backendStorageAccount
+    displayName: Nome confirmado do Storage de backend
+    type: string
+    default: PREENCHER_STORAGE
+  - name: backendContainer
+    type: string
+    default: tfstate
+  - name: backendKey
+    displayName: Chave confirmada do blob de state existente
+    type: string
+    default: PREENCHER_CHAVE
+
+  - name: publishPlan
+    displayName: Publicar plano sensível (após revisar permissões e aprovação)
+    type: boolean
+    default: false
+  - name: artifactAccessReviewed
+    displayName: Permissões e retenção dos artefatos foram revisadas
+    type: boolean
+    default: false
+  - name: requestApply
+    displayName: Solicitar implantação (continua bloqueada pela política no código)
+    type: boolean
+    default: false
+
+variables:
+  TF_IN_AUTOMATION: 'true'
+  TF_INPUT: 'false'
+
+stages:
+  - stage: TerraformValidate
+    displayName: Validar Terraform sem acessar Azure
+    jobs:
+      - job: Validate
+        timeoutInMinutes: 20
+        pool:
+          ${{ if eq(parameters.agentType, 'microsoftHosted') }}:
+            vmImage: ubuntu-24.04
+          ${{ else }}:
+            name: ${{ parameters.agentPool }}
+        steps:
+          - checkout: self
+            clean: true
+            fetchDepth: 1
+            persistCredentials: false
+          - task: PowerShell@2
+            displayName: Instalar Terraform 1.17.1
+            inputs:
+              pwsh: true
+              targetType: filePath
+              filePath: scripts/ci/Install-Terraform.ps1
+          - task: PowerShell@2
+            displayName: Testar bloqueios do CD sem Azure
+            inputs:
+              pwsh: true
+              targetType: filePath
+              filePath: tests/Test-TerraformCD.ps1
+          - task: PowerShell@2
+            displayName: Terraform fmt, init sem backend e validate
+            inputs:
+              pwsh: true
+              targetType: filePath
+              filePath: scripts/ci/Invoke-TerraformCI.ps1
+              arguments: -Mode Validate
+
+  # Sem este parâmetro, não há referência a conexão Azure nem Environment.
+  - ${{ if eq(parameters.runAzurePlan, true) }}:
+      - stage: TerraformPlan
+        dependsOn: TerraformValidate
+        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'Manual'))
+        jobs:
+          - job: Plan
+            timeoutInMinutes: 20
+            pool:
+              ${{ if eq(parameters.agentType, 'microsoftHosted') }}:
+                vmImage: ubuntu-24.04
+              ${{ else }}:
+                name: ${{ parameters.agentPool }}
+            steps:
+              - checkout: self
+                clean: true
+                fetchDepth: 1
+                persistCredentials: false
+              - template: pipelines/terraform-cd-steps.yml
+                parameters:
+                  mode: Plan
+                  serviceConnection: ${{ parameters.serviceConnection }}
+                  serviceConnectionId: ${{ parameters.serviceConnectionId }}
+                  storage: ${{ parameters.backendStorageAccount }}
+                  container: ${{ parameters.backendContainer }}
+                  key: ${{ parameters.backendKey }}
+                  publishPlan: ${{ parameters.publishPlan }}
+                  artifactAccessReviewed: ${{ parameters.artifactAccessReviewed }}
+              - ${{ if eq(parameters.publishPlan, true) }}:
+                  - task: PublishPipelineArtifact@1
+                    displayName: Publicar plano restrito desta execução
+                    inputs:
+                      targetPath: $(Build.ArtifactStagingDirectory)/terraform-plan-$(Build.BuildId)
+                      artifact: terraform-plan-$(Build.BuildId)
+                      publishLocation: pipeline
+                  - task: PowerShell@2
+                    displayName: Limpar cópia local do artefato
+                    condition: always()
+                    inputs:
+                      pwsh: true
+                      targetType: filePath
+                      filePath: scripts/cd/Remove-LocalPlan.ps1
+                      arguments: -Location Staging
+
+      - ${{ if and(eq(parameters.requestApply, true), eq(parameters.publishPlan, true)) }}:
+          - stage: TerraformApply
+            dependsOn: TerraformPlan
+            condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.Reason'], 'Manual'))
+            lockBehavior: sequential
+            jobs:
+              - deployment: ApplyApprovedPlan
+                displayName: Aplicar somente plano aprovado
+                environment: dev-terraform
+                timeoutInMinutes: 20
+                pool:
+                  ${{ if eq(parameters.agentType, 'microsoftHosted') }}:
+                    vmImage: ubuntu-24.04
+                  ${{ else }}:
+                    name: ${{ parameters.agentPool }}
+                strategy:
+                  runOnce:
+                    deploy:
+                      steps:
+                        - download: none
+                        - checkout: self
+                          clean: true
+                          fetchDepth: 1
+                          persistCredentials: false
+                        - download: current
+                          artifact: terraform-plan-$(Build.BuildId)
+                        - template: pipelines/terraform-cd-steps.yml
+                          parameters:
+                            mode: Apply
+                            serviceConnection: ${{ parameters.serviceConnection }}
+                            serviceConnectionId: ${{ parameters.serviceConnectionId }}
+                            storage: ${{ parameters.backendStorageAccount }}
+                            container: ${{ parameters.backendContainer }}
+                            key: ${{ parameters.backendKey }}
+                            publishPlan: false
+                            artifactAccessReviewed: ${{ parameters.artifactAccessReviewed }}
+                        - task: PowerShell@2
+                          displayName: Limpar plano baixado
+                          condition: always()
+                          inputs:
+                            pwsh: true
+                            targetType: filePath
+                            filePath: scripts/cd/Remove-LocalPlan.ps1
+                            arguments: -Location Workspace

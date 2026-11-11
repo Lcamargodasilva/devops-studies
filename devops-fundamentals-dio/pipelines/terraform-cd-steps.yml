@@ -1,0 +1,47 @@
+parameters:
+  - name: mode
+    type: string
+    values: [Plan, Apply]
+  - name: serviceConnection
+    type: string
+  - name: serviceConnectionId
+    type: string
+  - name: storage
+    type: string
+  - name: container
+    type: string
+  - name: key
+    type: string
+  - name: publishPlan
+    type: boolean
+    default: false
+  - name: artifactAccessReviewed
+    type: boolean
+    default: false
+steps:
+  - task: PowerShell@2
+    displayName: Instalar Terraform 1.17.1
+    inputs:
+      pwsh: true
+      targetType: filePath
+      filePath: scripts/ci/Install-Terraform.ps1
+  - task: AzureCLI@2
+    displayName: Terraform ${{ parameters.mode }} com OIDC
+    inputs:
+      azureSubscription: ${{ parameters.serviceConnection }}
+      scriptType: pscore
+      scriptLocation: scriptPath
+      scriptPath: scripts/cd/Invoke-TerraformCD.ps1
+      arguments: -Mode ${{ parameters.mode }}
+      addSpnToEnvironment: true
+      visibleAzLogin: false
+      useGlobalConfig: false
+    env:
+      BACKEND_STORAGE_ACCOUNT: ${{ parameters.storage }}
+      BACKEND_CONTAINER: ${{ parameters.container }}
+      BACKEND_KEY: ${{ parameters.key }}
+      ARM_OIDC_AZURE_SERVICE_CONNECTION_ID: ${{ parameters.serviceConnectionId }}
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+      SYSTEM_OIDCREQUESTURI: $(System.OidcRequestUri)
+      PUBLISH_SAVED_PLAN: ${{ lower(parameters.publishPlan) }}
+      ARTIFACT_ACCESS_REVIEWED: ${{ lower(parameters.artifactAccessReviewed) }}
