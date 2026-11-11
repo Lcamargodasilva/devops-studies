@@ -8,9 +8,9 @@ Bem-vindo ao meu repositório de estudos em **DevOps, Cloud Computing e Infraest
 
 Este espaço foi criado para documentar minha evolução profissional, organizar os conhecimentos adquiridos e compartilhar projetos práticos desenvolvidos durante cursos, bootcamps e desafios técnicos.
 
-Atualmente, estou aprofundando meus conhecimentos por meio da plataforma **DIO (Digital Innovation One)**, com foco em automação, infraestrutura como código, integração contínua e entrega contínua.
+Atualmente, estou aprofundando meus conhecimentos por meio da **DIO (Digital Innovation One)**, com foco em automação, infraestrutura como código, integração contínua e entrega contínua.
 
-O objetivo é transformar o aprendizado teórico em experiências práticas e construir um portfólio técnico para minha carreira em DevOps.
+Meu objetivo é transformar conhecimento teórico em experiência prática e construir um portfólio técnico para minha carreira em DevOps.
 
 ## 🎯 Objetivos
 
@@ -45,7 +45,7 @@ As tecnologias abaixo fazem parte da minha trilha de aprendizado. Nem todas fora
 
 **Status:** 🟡 Em andamento
 
-Meu primeiro foco neste repositório é consolidar os fundamentos de DevOps, com ênfase nas ferramentas e serviços do ecossistema Microsoft Azure.
+Meu primeiro foco é consolidar os fundamentos de DevOps, com ênfase nas ferramentas e serviços do ecossistema Microsoft Azure.
 
 **Conteúdos estudados e em desenvolvimento:**
 
@@ -60,39 +60,48 @@ Meu primeiro foco neste repositório é consolidar os fundamentos de DevOps, com
 - Azure Storage para armazenamento do estado do Terraform.
 - Automação de deploys na nuvem.
 
-**Projeto prático:** Implementação de infraestrutura na Microsoft Azure utilizando Terraform, com automação de CI/CD por meio do Azure DevOps.
+#### 🏗️ Laboratório prático
 
-**Repositório do desafio:** [DevOps Fundamentals](https://github.com/Lcamargodasilva/auladevopsfundamentals)
+**Projeto:** AulaDevOps-001 - Terraform no Azure DevOps
 
-> Os conteúdos apresentados representam os tópicos da trilha e das atividades práticas. A conclusão será atualizada conforme o avanço nos estudos.
+O laboratório contempla a definição de infraestrutura na Microsoft Azure utilizando Terraform e a preparação de pipelines automatizadas no Azure DevOps.
+
+**Implementações documentadas:**
+
+- Pipeline de validação de código Terraform (CI).
+- Fluxo de Plan e Apply estruturado em YAML e PowerShell.
+- Autenticação federada (OIDC) prevista para integração com Azure.
+- Verificações de segurança, branch e integridade dos planos.
+- Aprovação manual de implantação por meio de Azure DevOps Environments.
+- Testes locais de validação e políticas de implantação.
+
+**Situação atual:** ⚠️ O fluxo de CD foi preparado, porém o `terraform apply` permanece bloqueado por política. Ainda é necessário validar as configurações externas do Azure DevOps e autorizar a implantação real.
+
+📁 **[Acessar projeto DevOps Fundamentals - DIO](https://github.com/Lcamargodasilva/devops-studies/tree/main/devops-fundamentals-dio)**
+
+> O desenvolvimento do laboratório é incremental. A documentação do projeto apresenta os pré-requisitos, controles de segurança, testes e procedimentos necessários para sua execução.
 
 ---
 
 ## 📂 Organização dos projetos
 
-A proposta é utilizar este repositório como um ponto central de documentação e referência para os diferentes cursos e desafios.
+Este repositório funciona como um ponto central para meus cursos, laboratórios e desafios práticos.
 
-Estrutura sugerida:
+**Estrutura atual resumida:**
 
 ```text
-devops-journey/
+devops-studies/
 ├── README.md
-├── cursos/
-│   ├── devops-fundamentals/
-│   └── futuros-cursos/
-├── projetos/
-│   ├── azure/
-│   ├── terraform/
-│   ├── docker/
-│   └── cicd/
-├── anotacoes/
-│   ├── linux/
-│   ├── redes/
-│   └── devops/
-└── docs/
+└── devops-fundamentals-dio/
+    ├── azure-pipelines.yml
+    ├── codigoTerraform/
+    ├── pipelines/
+    ├── scripts/
+    ├── tests/
+    └── docs/
 ```
 
-A estrutura será criada e expandida gradualmente, conforme a necessidade de cada projeto.
+Novos cursos e projetos serão adicionados gradualmente, mantendo a documentação e os arquivos de cada atividade organizados.
 
 ## 🧭 Roadmap de aprendizado
 
@@ -100,7 +109,7 @@ A estrutura será criada e expandida gradualmente, conforme a necessidade de cad
 - [x] Praticar Git e GitHub.
 - [x] Conhecer o Azure DevOps.
 - [ ] Concluir o curso DevOps Fundamentals.
-- [ ] Consolidar conhecimentos em Azure Pipelines.
+- [ ] Validar pipelines reais no Azure DevOps.
 - [ ] Aprofundar estudos em Terraform.
 - [ ] Desenvolver projetos práticos com Docker.
 - [ ] Estudar Kubernetes.
